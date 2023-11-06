@@ -1,0 +1,70 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "lts_gns"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 2880  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: p0102_local_run
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 2000 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  recording:
+    wandb:
+      enabled: True  # right now disabled to not spam runs during debugging
+
+  algorithm:
+    name: lts_gns
+
+    common:
+      training:
+        batches_per_epoch: 5
+      evaluation:
+        large:
+          recompute_edges: True  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+          # if both true and false are in the list, both options are evaluated.
+          multi_step_evaluations: []
+          animation_task_indices: [ 0, 1, 2, 5, 10, 20, 25, 26, 30, 54 ]   # which tasks to plot.
+      simulator:
+        gnn:
+          latent_dimension: 128
+        decoder:
+          latent_dimension: 128
+
+  env:
+    name: tissue_manipulation
+    common:
+      debug:
+        max_tasks_per_split: 5
+      visualization:
+        num_frames: -1  # maximum number of frames to visualize. -1 for "all"
+    deformable_plate:
+      preprocess:
+        save_load:
+          file_name: tissue_dataset
+
+
+
+

@@ -1,0 +1,65 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "lts_gns"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 2880  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: "p3215_likelihood_weightings_smaller_train_loss"   # MUST BE DEFAULT
+import_path: ../default.yml
+import_exp: DEFAULT
+
+params:
+  algorithm:
+    common:
+      evaluation:
+        large:
+          frequency: 2
+          multi_step_evaluations: [ ]
+          recompute_edges: False
+          animation_task_indices: [0, 1, 2, 3, 4, 5, 6]   # which tasks to plot.
+          initial_eval: True
+    lts_gns:
+      training:
+        num_posterior_learner_steps: 5
+      evaluation:
+        large:
+          num_posterior_learner_steps: 300
+          training_gmm_indices: [0, 1, 2, 3, 8, 16]  # which gmms to use for the training set
+      simulator:
+        prior:
+          prior_scale: 1.0
+        likelihood:
+          std: 0.001
+          graph_aggregation: mean
+          timestep_aggregation: sum
+
+      posterior_learner:
+        name: multi_daft_posterior_learner
+        multi_daft_posterior_learner:
+          mini_batch_size_for_target_density: 1000
+          n_components: 3
+
+  env:
+    name: multi_modal_toy_task
+
+grid:
+  algorithm:
+    common:
+      simulator:
+        optimizer:
+          decoder_learning_rate: [5.0e-4, 5.0e-5, 5.0e-6]

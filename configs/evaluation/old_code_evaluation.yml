@@ -1,0 +1,98 @@
+algorithm:
+  common:
+    evaluation:
+      large:
+        frequency: 20   # after how many small evals there is a large one
+        multi_step_evaluations: []
+        animation_task_indices: [1]   # which tasks to plot.
+        mse_ggns_style: False
+  lts_gns_prodmp:
+    simulator:
+      posterior_learner:
+        multi_daft_posterior_learner:
+          sample_at_mean: False
+    evaluation:
+      large:
+        num_z_samples_per_animation_task: 10 # how many different animations with different z samples should be computed
+        num_posterior_learner_steps: 200
+  lts_gns:
+    evaluation:
+      large:
+        num_z_samples_per_animation_task: 3 # how many different animations with different z samples should be computed
+        training_gmm_indices: [0, 1]  # which gmms to use for the training set
+
+env:
+  common:  # common parameters that are used by all environments/tasks
+    postprocess:
+      context_eval_tasks:
+        min_task_length: 1
+        max_task_length: 2
+    preprocess:
+      start_index: 0
+    visualization:
+      num_frames: 100  # maximum number of frames to visualize. -1 for "all"
+      fps: 20
+      matplotlib:
+        show_legend: False
+        fig_size: 12
+        dpi: 20
+      plotly:
+        button_name: "Yoinks"
+
+  multi_modal_toy_task:
+    visualization:
+      backend: matplotlib  # either matplotlib or plotly. Some tasks only support one or the other
+      limits:
+        xlim: [ -1.25, 1.75 ]
+        ylim: [ -1.25, 1.75 ]
+        zlim: [ -1.25, 1.75 ]
+
+  deformable_plate:
+    visualization:
+      backend: matplotlib  # either matplotlib or plotly. Some tasks only support one or the other
+      limits:
+        xlim: [ -1.25, 1.75 ]
+        ylim: [ -1.25, 1.75 ]
+        zlim: [ -1.25, 1.75 ]
+    postprocess:
+      batch:
+        max_eval_batch_size: 1
+    debug:
+      max_tasks_per_split: 15
+
+
+  tissue_manipulation:
+    visualization:
+      backend: plotly  # either matplotlib or plotly. Some tasks only support one or the other
+      limits:
+        xlim: [ -1.0, 3.0 ]
+        ylim: [ -1.0, 1.0 ]
+        zlim: [ -1.5, 2.0 ]
+    postprocess:
+      batch:
+        max_eval_batch_size: 1
+    debug:
+      max_tasks_per_split: 15
+
+  multi_decision_toy_task:
+    visualization:
+      backend: matplotlib  # either matplotlib or plotly. Some tasks only support one or the other
+      limits:
+        xlim: [ -1.25, 1.75 ]
+        ylim: [ -1.25, 1.75 ]
+        zlim: [ -1.25, 1.75 ]
+
+  pybullet_uniform:
+    visualization:
+      backend: plotly  # either matplotlib or plotly. Some tasks only support one or the other
+      limits:
+        xlim: [ 0.0, 1.0 ]
+        ylim: [ 0.0, 1.0 ]
+        zlim: [ 0.0, 1.0 ]
+  pybullet_square_cloth:
+    visualization:
+      backend: plotly  # either matplotlib or plotly. Some tasks only support one or the other
+      limits:
+        xlim: [ 0.0, 1.0 ]
+        ylim: [ 0.0, 1.0 ]
+        zlim: [ 0.0, 1.0 ]

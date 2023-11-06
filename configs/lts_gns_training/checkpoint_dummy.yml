@@ -1,0 +1,109 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "lts_gns"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 2880  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: p2529_lts_gns_deformable_plate_checkpoint_dummy
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 1001 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  recording:
+    checkpoint_frequency: 10
+    wandb:
+      enabled: True  # right now disabled to not spam runs during debugging
+
+  device: cuda
+
+  algorithm:
+    name: lts_gns
+    common:
+      training:
+        batches_per_epoch: 10
+        # how may minibatches per recorded step. After every epoch, there is the small evaluation of the val tasks.
+      evaluation:
+        large:
+          frequency: 20
+          multi_step_evaluations: [ ]
+          animation_task_indices: [0]   # which tasks to plot.
+          recompute_edges: True
+          initial_eval: True
+      simulator:
+        loss: chamfer
+        chamfer:
+          density_aware: False
+          forward_only: False
+
+    lts_gns:
+      training:
+        num_z_samples_for_elbo_estimate: 32
+      evaluation:
+        small:
+          num_posterior_learner_step: 10
+        large:
+          num_posterior_learner_steps: 100
+          training_gmm_indices: [0, 1, 8]
+
+      simulator:
+        prior:
+          n_components: 3
+        likelihood:
+          std: 0.01
+
+      posterior_learner:
+        name: multi_daft_posterior_learner
+
+        multi_daft_posterior_learner:
+          n_components: 3
+          logging_frequency: 30   # If logging is enabled in the fit() method, the elbo and other metrics are logged every
+          # logging_frequency steps. The total logs are bundled into a wandb.Table and plotted
+          mini_batch_size_for_target_density: 500  # if n_samples_per_comp (or n_samples_per_comp_for_elbo_logging) * n_components > this, the call for the target_dist
+          # log_density() call is split into batches of this size. (For memory reasons)
+
+  env:
+    name: deformable_plate
+    common:
+      preprocess:
+        train_label_noise: 0.0
+        include_pc2mesh: False
+      postprocess:
+        auxiliary_tasks:
+          auxiliary_tasks_per_task: 16
+      debug:
+        max_tasks_per_split: 5
+
+    deformable_plate:
+      postprocess:
+        auxiliary_tasks:
+          min_task_length: 1
+          max_task_length: 50
+          sampling_type: slice
+        context_eval_tasks:
+          min_context_task_length: 1
+          max_context_task_length: 30
+          sampling_type: slice_from_start
+
+

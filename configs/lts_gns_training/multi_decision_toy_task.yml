@@ -1,0 +1,128 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "lts_gns"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 2880  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: p3815_lts_gns_multi_decision_only_x_dropout
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for parallelization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 1000 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  recording:
+    wandb:
+      enabled: True  # right now disabled to not spam runs during debugging
+
+  device: cuda
+
+  algorithm:
+    name: lts_gns
+    common:
+      training:
+        batches_per_epoch: 500
+      evaluation:
+        large:
+          frequency: 20   # after how many small evals there is a large one
+          multi_step_evaluations: []
+          animation_task_indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # which tasks to plot.
+          recompute_edges: False
+          initial_eval: True
+      simulator:
+        gnn:
+          latent_dimension: 64
+          base:
+            stack:
+              num_steps: 2
+        decoder:
+          latent_dimension: 128
+
+    lts_gns:
+      training:
+        num_z_samples_for_elbo_estimate: 32
+        num_posterior_learner_steps: 1
+      evaluation:
+        large:
+          num_posterior_learner_steps:  100
+          training_gmm_indices: []
+          num_z_samples_per_animation_task: 3
+      simulator:
+        decoder:
+          feature_dropout: null
+          z_embedding: null
+        prior:
+          n_components: 2
+          prior_scale: 2.0
+          initial_var: 1.0
+        likelihood:
+          std: 0.1
+          graph_aggregation: mean
+          timestep_aggregation: sum
+        graph_dropout:
+          node_dropout: 0.5
+          edge_dropout: 0.0
+          global_dropout: 0.0
+
+      posterior_learner:
+        name: multi_daft_posterior_learner
+
+        multi_daft_posterior_learner:
+          d_z: 1
+          n_components: 2
+          logging_frequency: 30   # If logging is enabled in the fit() method, the elbo and other metrics are logged every
+          # logging_frequency steps. The total logs are bundled into a wandb.Table and plotted
+          mini_batch_size_for_target_density: 500  # if n_samples_per_comp (or n_samples_per_comp_for_elbo_logging) * n_components > this, the call for the target_dist
+          # log_density() call is split into batches of this size. (For memory reasons)
+  env:
+    name: multi_decision_toy_task
+    common:
+      debug:
+        max_tasks_per_split: null
+      preprocess:
+        train_label_noise: 0.01
+    multi_decision_toy_task:
+      preprocess:
+        use_time_features: True
+        use_pos_features: True
+        save_load:
+          version: simple
+      postprocess:
+        auxiliary_tasks:
+          auxiliary_tasks_per_task: 16
+          min_task_length: 1
+          max_task_length: 59
+          sampling_type: uniform
+        context_eval_tasks:
+          min_context_task_length: 1
+          max_context_task_length: 1
+          sampling_type: uniform
+
+grid:
+  algorithm:
+    lts_gns:
+      simulator:
+        graph_dropout:
+          node_dropout: [0.0, 0.1, 0.2, 0.5, 0.7]
+
+

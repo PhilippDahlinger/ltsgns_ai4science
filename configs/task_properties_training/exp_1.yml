@@ -1,0 +1,79 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "task_prop"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 4
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 5760  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+  exclude: "node6,node7"
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: p4203_task_properties
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 5 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 2000 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  exp_version: 1
+  recording:
+    wandb:
+      enabled: True  # right now disabled to not spam runs during debugging
+
+  algorithm:
+    name: lts_gns
+
+    common:
+      training:
+        batches_per_epoch: 500
+      evaluation:
+        large:
+          recompute_edges: True  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+          frequency: 200
+          # if both true and false are in the list, both options are evaluated.
+          multi_step_evaluations: [ 1, 5, 10, 15 ]
+          animation_task_indices: [ 0, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97 ]   # which tasks to plot.
+      simulator:
+        gnn:
+          latent_dimension: 128
+        decoder:
+          latent_dimension: 128
+    lts_gns:
+      evaluation:
+        large:
+          num_posterior_learner_steps: 200
+          num_z_samples_per_animation_task: 1 # how many different animations with different z samples should be computed
+      simulator:
+        likelihood:
+          std: 1.0
+          graph_aggregation: mean
+          timestep_aggregation: sum
+
+      posterior_learner:
+        name: task_properties_learner
+
+  env:
+    common:
+      debug:
+        max_tasks_per_split: null
+
+list:
+  env:
+    name: [deformable_plate, tissue_manipulation, pybullet_square_cloth]

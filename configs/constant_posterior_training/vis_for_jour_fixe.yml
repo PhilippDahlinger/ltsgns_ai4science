@@ -1,0 +1,109 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "lts_gns"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 4
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 1440  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: 0704_ground_truths_for_different_physics
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 4 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 1000 # number of iterations of the algorithm
+
+params:
+  recording:
+    wandb:
+      enabled: False
+
+  algorithm:
+    name: lts_gns
+    common:
+      training:
+        batches_per_epoch: 500
+      evaluation:
+        large:
+          frequency: 10
+          multi_step_evaluations: [ 1, 5, 10 ]
+          animation_task_indices: [ 8, 9, 10, 11, 12, 13, 14, 15 ]
+    lts_gns:
+      posterior_learner:
+        name: constant_posterior_learner
+
+
+  env:
+    name: deformable_plate
+    common:
+      visualization:
+        matplotlib:
+          dpi: 100  # dots per inch
+    deformable_plate:
+      preprocess:
+        task_properties_input_selection: node
+        save_load:
+          path_to_datasets: ../datasets/lts_gns/
+          load_preprocessed_graph: False
+          save_preprocessed_graph: False
+          file_name: debug_dataset
+        connectivity_setting:
+          collider_collider_radius: 0.08
+          collider_mesh_radius: 0.3
+          world_mesh_radius: null
+    debug:
+      max_tasks_per_split: null
+
+---
+
+name: "0704_vis_for_jour_fixe"   # MUST BE DEFAULT
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 4 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 1000 # number of iterations of the algorithm
+
+params:
+  device: cuda
+
+  algorithm:
+    name: lts_gns
+    common:
+      training:
+        batches_per_epoch: 500
+      evaluation:
+        large:
+          frequency: 10
+          multi_step_evaluations: [1, 5, 10]
+          animation_task_indices: [8, 9, 10, 11, 12, 13, 14, 15]
+    lts_gns:
+      posterior_learner:
+        name: constant_posterior_learner
+
+  env:
+    name: deformable_plate
+    deformable_plate:
+      preprocess:
+        save_load:
+          file_name: debug_dataset

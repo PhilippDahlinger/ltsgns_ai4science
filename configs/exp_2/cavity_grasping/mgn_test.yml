@@ -1,0 +1,96 @@
+name: "SLURM"   # MUST BE "SLURM"
+
+partition: "dev_gpu_4_a100"
+job-name: "GPU"    # this will be the experiments name in slurm
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 4
+mem-per-cpu: 8000 # in MB
+time: 30 # in minutes
+nodes: 1
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  distribution: cyclic  # To have repetitions of the same exp be distributed to different nodes
+  gres: "gpu:1"
+
+slurm_log: "./output/slurmlog"     # optional. dir in which slurm output and error logs will be saved.
+# add this to put wandb and its I/O operations on the local scratch disk. That's important because the network
+# connection to the cluster is slow and the cluster's home directory is not meant for I/O operations. Also, the
+# wandb data is uploaded to the cloud after each run, so it's not necessary to keep it on the cluster.
+sh_lines: [ "export WANDB_DIR=$TMP/wandb", "mkdir $WANDB_DIR" ]
+---
+name: "p0101_mgn_cavity_grasping"
+
+import_path: ../../default.yml
+import_exp: DEFAULT
+
+# Implementation default parameters
+path: "./output/cw2_data"   # location to save reports in
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 1000  # number of iterations of the algorithm
+
+params:
+  exp_version: 2
+  recording:
+    checkpoint_frequency: 100  # checkpointing can quickly become expensive for larger models. We also may only want
+    # to do this every n iterations.
+    wandb:
+      enabled: True  # whether to use the wandb logger or not
+      entity: kit-alr
+
+  algorithm:
+    name: mgn
+    common:
+      # parameters that are used by all algorithms
+      training:
+        batches_per_epoch: 50   # how may minibatches per recorded step. After every epoch, there is the small evaluation of the val tasks.
+        add_training_noise: True
+      evaluation:
+        large:
+          recompute_edges: True  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+          # if both true and false are in the list, both options are evaluated.
+          frequency: 100   # after how many small evals there is a large one
+          multi_step_evaluations: [ 1, 5, 10, 99]
+          animation_task_indices: [0, 1, 10]   # which tasks to plot.
+          initial_eval: True  # whether to do an initial evaluation after first iteration or not (is slower)
+      simulator:
+        decoder:
+          latent_dimension: 256
+        optimizer:
+          gnn_learning_rate: 5.0e-4
+          decoder_learning_rate: 5.0e-4
+
+  env:
+    name: cavity_grasping
+    common:  # common parameters that are used by all environments/tasks
+      statistics:
+        use_output_normalizer: False  # if true, will use the tasks statistics  to normalize the GNS output for training
+      preprocess:
+        save_load:
+          path_to_datasets: ../datasets/lts_gns/
+          load_preprocessed_graph: False  # no load/save shenanigans
+          save_preprocessed_graph: False
+        task_properties_input_selection: null
+        use_collider_velocities: True
+      postprocess:
+        auxiliary_tasks:
+          auxiliary_tasks_per_task: 30
+          min_task_length: 1
+          max_task_length: 30
+          sampling_type: uniform
+        context_eval_tasks:
+          auxiliary_tasks_per_task: 1
+          min_task_length: 1
+          max_task_length: 10
+          sampling_type: uniform
+        euclidian_distance_feature: True
+      debug:
+        max_tasks_per_split: 20
+    cavity_grasping:
+      postprocess:
+        batch:
+          max_train_batch_size: 20
+          max_eval_batch_size: 10

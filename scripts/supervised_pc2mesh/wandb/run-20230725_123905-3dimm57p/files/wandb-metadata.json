@@ -1,0 +1,125 @@
+{
+    "os": "Linux-5.19.0-41-generic-x86_64-with-glibc2.35",
+    "python": "3.10.6",
+    "heartbeatAt": "2023-07-25T10:39:05.761316",
+    "startedAt": "2023-07-25T10:39:05.135623",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/home/philipp/projects/lts_gns/scripts/supervised_pc2mesh/supervised_pc2mesh_train.py",
+    "codePath": "scripts/supervised_pc2mesh/supervised_pc2mesh_train.py",
+    "git": {
+        "remote": "git@github.com:ALRhub/lts_gns.git",
+        "commit": "52a948533065e7492b48e607e45b93873c53b82a"
+    },
+    "email": "philipp.dahlinger@kit.edu",
+    "root": "/home/philipp/projects/lts_gns",
+    "host": "PhilippALR",
+    "username": "philipp",
+    "executable": "/home/philipp/venvs/lts_gns/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2503.3093125000005,
+        "min": 2200.0,
+        "max": 3600.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2470.428,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 4249.567,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2389.934,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2037.857,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2064.945,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2136.849,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2548.243,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2453.469,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2391.832,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2873.7,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2114.724,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2127.209,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 3461.493,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2200.341,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2200.0,
+            "min": 2200.0,
+            "max": 3600.0
+        },
+        {
+            "current": 2200.0,
+            "min": 2200.0,
+            "max": 3600.0
+        }
+    ],
+    "disk": {
+        "total": 467.8895797729492,
+        "used": 167.47151565551758
+    },
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3060",
+            "memory_total": 12884901888
+        }
+    ],
+    "memory": {
+        "total": 62.7124137878418
+    }
+}

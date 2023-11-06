@@ -1,0 +1,130 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "mgn"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 4320  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: "e2__2mgn_poisson_decoder_deformable_plate"
+
+import_path: ../../default.yml
+import_exp: DEFAULT
+
+# Implementation default parameters
+path: "./output/cw2_data"   # location to save reports in
+repetitions: 5 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 3000  # number of iterations of the algorithm
+
+params:
+  exp_version: 2
+  recording:
+    checkpoint_frequency: 100  # checkpointing can quickly become expensive for larger models. We also may only want
+    # to do this every n iterations.
+    wandb:
+      enabled: True  # whether to use the wandb logger or not
+      entity: kit-alr
+
+  algorithm:
+    name: lts_gns
+    common:
+      # parameters that are used by all algorithms
+      training:
+        batches_per_epoch: 500   # how may minibatches per recorded step. After every epoch, there is the small evaluation of the val tasks.
+        add_training_noise: True
+      evaluation:
+        large:
+          recompute_edges: True  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+          # if both true and false are in the list, both options are evaluated.
+          frequency: 100   # after how many small evals there is a large one
+          multi_step_evaluations: [ 1, 5, 10, 49 ]
+          animation_task_indices: [0, 1, 10]   # which tasks to plot.
+          initial_eval: True  # whether to do an initial evaluation after first iteration or not (is slower)
+      simulator:
+        gnn:
+          base:
+            stack:
+              layer_norm: null
+              residual_connections: outer
+        decoder:
+          latent_dimension: 128
+        optimizer:
+          gnn_learning_rate: 5.0e-4
+          decoder_learning_rate: 5.0e-4
+
+    lts_gns:
+      training:
+        num_z_samples_for_elbo_estimate: 1  # how many samples to use for the elbo estimate for the GNN training part
+        num_posterior_learner_steps: 1
+      evaluation:
+        small:
+          num_posterior_learner_step: 1
+        large:
+          num_posterior_learner_steps: 1
+          num_z_samples_per_animation_task: 1 # how many different animations with different z samples should be computed
+          training_gmm_indices: []  # which gmms to use for the training set
+
+      simulator:
+        prior:
+          n_components: 4
+          prior_scale: 1.0
+          initial_var: 1.0
+        likelihood:
+          std: 1.0
+      posterior_learner:
+        name: task_properties_learner
+        task_properties_learner: # it outputs the task properties as the latent z var
+          dummy: null   # no arguments for this learner, but it is required to not have an empty dict
+
+  env:
+    name: deformable_plate
+    common:  # common parameters that are used by all environments/tasks
+      statistics:
+        use_output_normalizer: False  # if true, will use the tasks statistics  to normalize the GNS output for training
+      preprocess:
+        save_load:
+          path_to_datasets: ../datasets/lts_gns/
+          load_preprocessed_graph: False  # no load/save shenanigans
+          save_preprocessed_graph: False
+        task_properties_input_selection: null
+        use_collider_velocities: True
+      postprocess:
+        auxiliary_tasks:
+          auxiliary_tasks_per_task: 30
+          min_task_length: 1
+          max_task_length: 30
+          sampling_type: uniform
+        context_eval_tasks:
+          auxiliary_tasks_per_task: 1
+          min_task_length: 1
+          max_task_length: 10
+          sampling_type: uniform
+        euclidian_distance_feature: True
+      debug:
+        max_tasks_per_split: null
+    deformable_plate:
+      preprocess:
+        use_point_cloud: False
+      postprocess:
+        batch:
+          max_train_batch_size: 100
+          max_eval_batch_size: 100
+
+

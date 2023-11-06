@@ -1,0 +1,9 @@
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/lts_gns_prodmp_more_blocks_deformable_plate.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/lts_gns_prodmp_more_blocks_deformable_plate_pc.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/lts_gns_prodmp_tissue_manipulation.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/mgn_deformable_plate.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/mgn_poisson_decoder_deformable_plate.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/mgn_poisson_decoder_tissue_manipulation.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/mgn_prodmp_deformable_plate.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/mgn_prodmp_tissue_manipulation.yml -o -s
+python scripts/evaluation/evaluate_model_cw2.py configs/evaluation/last_step_eval/mgn_tissue_manipulation.yml -o -s

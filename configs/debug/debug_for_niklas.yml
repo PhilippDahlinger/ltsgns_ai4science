@@ -1,0 +1,314 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "single"
+job-name: "lts_gns"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 16
+mem-per-cpu: 8000
+time: 1440  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  distribution: cyclic  # To have repetitions of the same exp be distributed to different nodes
+
+slurm_log: "./slurmlog" # optional. dir in which slurm output and error logs will be saved.
+
+---
+name: n0101_debug
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 20 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  recording:
+    wandb:
+      enabled: False  # right now disabled to not spam runs during debugging
+
+  device: cuda
+  algorithm:
+    name: lts_gns
+    lts_gns:
+      training:
+        batches_per_epoch: 5  # usually 500, here a lot smaller to get to the evaluations
+      evaluation:
+        large:
+          frequency: 2  # usually about 10 (= num epochs after a large eval is started). Here a lot smaller for debug
+          multi_step_evaluations: [1, 5, 10]
+          animation_task_indices: [0]
+          recompute_edges: [True]  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+      simulator:
+        name: lts_gns_simulator
+        lts_gns_simulator:
+          gnn:
+            latent_dimension: 32
+            base:
+              assert_graph_shapes: True
+          decoder:
+            lts_gns_decoder:
+              z_embedding: linear  # whether to embed the z into the hidden dimension of the decoder or not
+
+  env:
+    name: deformable_plate
+    deformable_plate:
+      preprocess:
+        save_load:
+          path_to_datasets: ../datasets/lts_gns/
+          load_preprocessed_graph: False  # no load/save shenanigans
+          save_preprocessed_graph: False
+          file_name: debug_dataset
+        connectivity_setting:
+          collider_collider_radius: 0.08
+          collider_mesh_radius: 0.3
+          world_mesh_radius: null
+    debug:
+      max_tasks_per_split: 10   # this is important: for real runs, this has to be null, for debugging you can cut the
+                                  # number of train/eval tasks to load. This speeds up the creation of the dataset
+                                  # by a lot, however you are only training on a small subset. Only for debugging!
+
+
+---
+name: n0201_debug
+# meshgraphnet debug
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 20 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  recording:
+    wandb:
+      enabled: True  # right now disabled to not spam runs during debugging
+
+  device: cuda
+
+
+  algorithm:
+    name: mgn
+    common:
+      # parameters that are used by all algorithms
+      training:
+        add_training_noise: False
+        batches_per_epoch: 5  # usually 500, here a lot smaller to get to the evaluations
+      evaluation:
+        large:
+          recompute_edges: [ True, False ]  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+          # if both true and false are in the list, both options are evaluated.
+          frequency: 20   # after how many small evals there is a large one
+          multi_step_evaluations: [ 1, 5, 10 ]
+          animation_task_indices: [ 0, 1 ]   # which tasks to plot.
+          initial_eval: True  # whether to do an initial evaluation after first iteration or not (is slower)
+
+      simulator:
+        gnn:
+          latent_dimension: 32
+        decoder:
+          latent_dimension: 32
+        loss: chamfer
+
+  env:
+    name: deformable_plate
+    deformable_plate:
+      preprocess:
+        save_load:
+          file_name: debug_dataset
+    common:
+      debug:
+        max_tasks_per_split: 10  # this is important: for real runs, this has to be null, for debugging you can cut the
+                                 # number of train/eval tasks to load. This speeds up the creation of the dataset
+                                 # by a lot, however you are only training on a small subset. Only for debugging!
+
+
+---
+name: n0301_debug
+import_path: ../default.yml
+import_exp: DEFAULT
+
+params:
+  algorithm:
+    common:
+      # parameters that are used by all algorithms
+      training:
+        add_training_noise: True
+        batches_per_epoch: 5  # usually 500, here a lot smaller to get to the evaluations
+      evaluation:
+        large:
+          frequency: 2
+          multi_step_evaluations: [ ]
+          recompute_edges: False
+          animation_task_indices: [0, 1, 2, 3, 4, 5, 6]   # which tasks to plot.
+          initial_eval: True
+      simulator:
+        gnn:
+          latent_dimension: 32
+        decoder:
+          latent_dimension: 32
+        loss: chamfer
+
+    lts_gns:
+      training:
+        num_z_samples_for_elbo_estimate: 1  # how many samples to use for the elbo estimate for the GNN training part
+        num_posterior_learner_steps: 5
+      evaluation:
+        large:
+          num_posterior_learner_steps: 300
+          training_gmm_indices: [0, 1, 2, 3, 8, 16]  # which gmms to use for the training set
+      simulator:
+        use_posterior_target_network: True  # whether to use a target network for the posterior learner or not
+        posterior_target_network_rate: 0.99  # 1-rate at which the target network is updated
+        prior:
+          prior_scale: 1.0
+        likelihood:
+          std: 1
+          graph_aggregation: mean
+          timestep_aggregation: sum
+
+      posterior_learner:
+        name: multi_daft_posterior_learner
+        multi_daft_posterior_learner:
+          mini_batch_size_for_target_density: 1000
+          n_components: 3
+
+  env:
+    name: deformable_plate
+    deformable_plate:
+      preprocess:
+        save_load:
+          file_name: debug_dataset
+    common:
+      debug:
+        max_tasks_per_split: 10  # this is important: for real runs, this has to be null, for debugging you can cut the
+                                 # number of train/eval tasks to load. This speeds up the creation of the dataset
+                                 # by a lot, however you are only training on a small subset. Only for debugging!
+
+---
+name: n0401_debug_tissue
+# meshgraphnet debug
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 20 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  recording:
+    wandb:
+      enabled: True  # right now disabled to not spam runs during debugging
+
+  device: cuda
+
+
+  algorithm:
+    name: mgn
+    common:
+      # parameters that are used by all algorithms
+      training:
+        add_training_noise: False
+        batches_per_epoch: 3  # usually 500, here a lot smaller to get to the evaluations
+      evaluation:
+        large:
+          recompute_edges: [True, False]  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+          # if both true and false are in the list, both options are evaluated.
+          frequency: 20   # after how many small evals there is a large one
+          multi_step_evaluations: [ 1, 2 ]
+          animation_task_indices: [ 0, 1 ]   # which tasks to plot.
+          initial_eval: True  # whether to do an initial evaluation after first iteration or not (is slower)
+
+      simulator:
+        gnn:
+          latent_dimension: 16
+        decoder:
+          latent_dimension: 16
+        loss: chamfer
+
+  env:
+    name: tissue_manipulation
+    deformable_plate:
+      preprocess:
+        save_load:
+          file_name: debug_dataset
+    tissue_manipulation:
+      preprocess:
+        connectivity_setting:
+          world_mesh_radius: 0.1   # Use if no world edges are used
+    common:
+      debug:
+        max_tasks_per_split: 5  # this is important: for real runs, this has to be null, for debugging you can cut the
+                                 # number of train/eval tasks to load. This speeds up the creation of the dataset
+                                 # by a lot, however you are only training on a small subset. Only for debugging!
+
+---
+name: n0801_debug_cloth
+# meshgraphnet debug
+
+import_path: ../default.yml
+import_exp: DEFAULT
+
+repetitions: 1 # number of times one set of parameters is run
+reps_per_job: 1 # number of repetitions in each job. useful for paralellization. defaults to 1.
+reps_in_parallel: 1 # number of repetitions in each job that are executed in parallel. defaults to 1.
+
+iterations: 20 # number of iterations of the algorithm, usually about 500 when it starts overfitting
+
+params:
+  recording:
+    wandb:
+      enabled: True  # right now disabled to not spam runs during debugging
+
+  device: cuda
+
+
+  algorithm:
+    name: mgn
+    common:
+      # parameters that are used by all algorithms
+      training:
+        add_training_noise: False
+        batches_per_epoch: 3  # usually 500, here a lot smaller to get to the evaluations
+      evaluation:
+        large:
+          recompute_edges: [True, False]  # whether to recompute the (mesh-collider) edges for the evaluation or not.
+          # if both true and false are in the list, both options are evaluated.
+          frequency: 20   # after how many small evals there is a large one
+          multi_step_evaluations: [ 1, 2 ]
+          animation_task_indices: [ 0, 1 ]   # which tasks to plot.
+          initial_eval: True  # whether to do an initial evaluation after first iteration or not (is slower)
+
+      simulator:
+        gnn:
+          latent_dimension: 16
+        decoder:
+          latent_dimension: 16
+        loss: chamfer
+
+  env:
+    name: pybullet_square_cloth
+    pybullet_square_cloth:
+      preprocess:
+        connectivity_setting:
+          world_mesh_radius: 0.1   # Use if no world edges are used
+    common:
+      debug:
+        max_tasks_per_split: 5  # this is important: for real runs, this has to be null, for debugging you can cut the
+                                 # number of train/eval tasks to load. This speeds up the creation of the dataset
+                                 # by a lot, however you are only training on a small subset. Only for debugging!

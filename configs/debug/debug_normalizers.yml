@@ -1,0 +1,81 @@
+# This is the main config file for default parameters for all hyperparameter and task parameter.
+# Every config file should import this. The project will run with these parameters, no matter what.
+
+name: "SLURM"   # MUST BE "SLURM"
+
+# Required
+partition: "gpu"
+job-name: "lts_gns"    # this will be the experiments name in slurm
+
+# Required - Cluster Specific
+num_parallel_jobs: 99
+ntasks: 1
+cpus-per-task: 2
+mem-per-cpu: 15000
+time: 2880  # in minutes
+
+sbatch_args: # Dictionary of SBATCH keywords and arguments
+  gres: "gpu:1"
+
+slurm_log: "./output/slurmlog" # optional. dir in which slurm output and error logs will be saved.
+---
+name: "p3504_debug_normalizer"   # MUST BE DEFAULT
+import_path: ../default.yml
+import_exp: DEFAULT
+
+params:
+  algorithm:
+    common:
+      evaluation:
+        large:
+          frequency: 1
+          multi_step_evaluations: [ ]
+          recompute_edges: False
+          animation_task_indices: [ 0, 1, 2, 5 ]   # which tasks to plot.
+          initial_eval: True
+    lts_gns:
+      training:
+        num_posterior_learner_steps: 1
+      evaluation:
+        large:
+          num_posterior_learner_steps: 150
+          training_gmm_indices: [0]  # which gmms to use for the training set
+      simulator:
+        prior:
+          prior_scale: 1.0
+        likelihood:
+          std: 1.0
+          graph_aggregation: mean
+          timestep_aggregation: sum
+
+        optimizer:
+          gnn_learning_rate: 5.0e-4
+          decoder_learning_rate: 5.0e-4
+
+
+      posterior_learner:
+        name: multi_daft_posterior_learner
+        multi_daft_posterior_learner:
+          mini_batch_size_for_target_density: 1000
+          n_components: 3
+
+  recording:
+    wandb:
+      enabled: False
+
+  env:
+    name: multi_modal_toy_task
+    common:
+      postprocess:
+        auxiliary_tasks:
+          auxiliary_tasks_per_task: 4
+          max_task_length: 10
+          sampling_type: slice_from_start
+        context_eval_tasks:
+          max_context_task_length: 10
+          sampling_type: slice_from_start
+        input_mesh_noise: 0.0
+    multi_modal_toy_task:
+      preprocess:
+        save_load:
+          file_name: debug_dataset
