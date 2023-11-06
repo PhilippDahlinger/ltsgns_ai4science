@@ -1,5 +1,5 @@
 # LTS-GNS
-This is the deprecated source code for "Latent task-specific Graph Network Simulators". The refactored code can be found here: [LTSGNS-MP](https://github.com/ALRhub/ltsgns_mp)
+This repository contains the code for the paper [Latent task-specific Graph Network Simulators](https://arxiv.org/abs/2106.01401) by [Philipp Dahlinger](https://github.com/philippdahlinger/), Niklas Freymuth, Michael Volpp, Tai Hoang, and Gerhard Neumann.
 
 ## Installation
 Clone this repository and run
