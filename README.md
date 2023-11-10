@@ -48,7 +48,6 @@ pip install --upgrade torch-scatter -f https://data.pyg.org/whl/torch-2.0.0+cu11
 ## Run
 
 Running experiments is done via the `main.py` script using [cw2](https://github.com/ALRhub/cw2.git).
-TODO
 
 ## License
 "LTS-GNS" is open-sourced under the [MIT license](LICENSE).
