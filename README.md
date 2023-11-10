@@ -1,5 +1,5 @@
 # LTS-GNS
-This repository contains the code for the paper [Latent task-specific Graph Network Simulators](https://arxiv.org/abs/2106.01401) by [Philipp Dahlinger](https://github.com/philippdahlinger/), Niklas Freymuth, Michael Volpp, Tai Hoang, and Gerhard Neumann.
+This repository contains the code for the paper [Latent task-specific Graph Network Simulators](https://arxiv.org/pdf/2311.05256.pdf) by [Philipp Dahlinger](https://github.com/philippdahlinger/), Niklas Freymuth, Michael Volpp, Tai Hoang, and Gerhard Neumann.
 
 ## Installation
 Clone this repository and run
